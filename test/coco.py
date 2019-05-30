@@ -65,7 +65,7 @@ def kp_detection(db, nnet, result_dir, debug=False, decode_func=kp_decode):
         "linear_soft_nms": 1, 
         "exp_soft_nms": 2
     }[db.configs["nms_algorithm"]]
-
+   
     top_bboxes = {}
     for ind in tqdm(range(0, num_images), ncols=80, desc="locating kps"):
         db_ind = db_inds[ind]
@@ -148,7 +148,7 @@ def kp_detection(db, nnet, result_dir, debug=False, decode_func=kp_decode):
             for j in range(1, categories + 1):
                 keep_inds = (top_bboxes[image_id][j][:, -1] >= thresh)
                 top_bboxes[image_id][j] = top_bboxes[image_id][j][keep_inds]
-
+        
         if debug:
             image_file = db.image_file(db_ind)
             image      = cv2.imread(image_file)
@@ -189,6 +189,7 @@ def kp_detection(db, nnet, result_dir, debug=False, decode_func=kp_decode):
                         color, 2
                     )
             debug_file = os.path.join(debug_dir, "{}.jpg".format(db_ind))
+            cv2.imwrite(debug_file, image)
 
     result_json = os.path.join(result_dir, "results.json")
     detections  = db.convert_to_coco(top_bboxes)

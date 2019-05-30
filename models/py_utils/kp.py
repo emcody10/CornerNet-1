@@ -267,6 +267,11 @@ class AELoss(nn.Module):
     def forward(self, outs, targets):
         stride = 6
 
+        #print('outs:', len(outs))
+        #print('outs[0]:', outs[0].size())
+        #print('targets:', len(targets))
+        #print('targets[0]:', targets[0].size())
+
         tl_heats = outs[0::stride]
         br_heats = outs[1::stride]
         tl_tags  = outs[2::stride]
@@ -288,6 +293,7 @@ class AELoss(nn.Module):
 
         focal_loss += self.focal_loss(tl_heats, gt_tl_heat)
         focal_loss += self.focal_loss(br_heats, gt_br_heat)
+        #print('gt_tl_heat:', len(gt_tl_heat))
 
         # tag loss
         pull_loss = 0
@@ -305,6 +311,10 @@ class AELoss(nn.Module):
             regr_loss += self.regr_loss(tl_regr, gt_tl_regr, gt_mask)
             regr_loss += self.regr_loss(br_regr, gt_br_regr, gt_mask)
         regr_loss = self.regr_weight * regr_loss
-
+        
+        #print('DENOMINATOR IN LOSS:', len(tl_heats))
+        if len(tl_heats) == 0:
+            print('DENOMINATOR IN LOSS IS 0')
         loss = (focal_loss + pull_loss + push_loss + regr_loss) / len(tl_heats)
+        #print('loss.unsqueeze(0):', loss.unsqueeze(0))
         return loss.unsqueeze(0)

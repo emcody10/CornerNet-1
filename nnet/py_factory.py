@@ -53,7 +53,8 @@ class NetworkFactory(object):
 
         if system_configs.opt_algo == "adam":
             self.optimizer = torch.optim.Adam(
-                filter(lambda p: p.requires_grad, self.model.parameters())
+                filter(lambda p: p.requires_grad, self.model.parameters()),
+                eps=0.0001
             )
         elif system_configs.opt_algo == "sgd":
             self.optimizer = torch.optim.SGD(

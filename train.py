@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import cv2
+
 import os
 
 import json
@@ -143,6 +145,17 @@ def train(training_dbs, validation_db, start_iter=0):
             if val_iter and validation_db.db_inds.size and iteration % val_iter == 0:
                 nnet.eval_mode()
                 validation = pinned_validation_queue.get(block=True)
+                #print('validation len: {}'.format(len(validation)))
+                #print('xs: {}, ys: {}'.format(len(validation['xs']), len(validation['ys'])))
+                #for x in validation['xs']:
+                    #print('x: {}'.format(len(x)))
+                    #print('x.shape: {}'.format(x.shape))
+                #for y in validation['ys']:
+                    #print('y: {}'.format(len(y)))
+                    #print('y.shape: {}'.format(y.shape))
+                #print(validation['xs'][0][0,:,:,:].__class__)
+                #cv2.imwrite('/project/p1/code/CornerNet/test.png', validation['xs'][0][0,:,:,:])
+                #print('validation keys: {}', validation.keys())
                 validation_loss = nnet.validate(**validation)
                 print("validation loss at iteration {}: {}".format(iteration, validation_loss.item()))
                 nnet.train_mode()
@@ -177,13 +190,17 @@ if __name__ == "__main__":
     train_split = system_configs.train_split
     val_split   = system_configs.val_split
 
-    print("loading all datasets...")
     dataset = system_configs.dataset
     # threads = max(torch.cuda.device_count() * 2, 4)
     threads = args.threads
     print("using {} threads".format(threads))
+    print('datasets:', datasets)
+    print('datasets[dataset]:', datasets[dataset])
+    print('configs["db"]:', configs['db'])
     training_dbs  = [datasets[dataset](configs["db"], train_split) for _ in range(threads)]
     validation_db = datasets[dataset](configs["db"], val_split)
+    print('training_dbs:', training_dbs)
+    print('validation_db:', validation_db)
 
     print("system config...")
     pprint.pprint(system_configs.full)

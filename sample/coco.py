@@ -104,10 +104,10 @@ def kp_detection(db, k_ind, data_aug, debug):
         height_ratio = output_size[0] / input_size[0]
 
         # flipping an image randomly
-        if not debug and np.random.uniform() > 0.5:
-            image[:] = image[:, ::-1, :]
-            width    = image.shape[1]
-            detections[:, [0, 2]] = width - detections[:, [2, 0]] - 1
+        # if not debug and np.random.uniform() > 0.5:
+        #     image[:] = image[:, ::-1, :]
+        #     width    = image.shape[1]
+        #     detections[:, [0, 2]] = width - detections[:, [2, 0]] - 1
 
         if not debug:
             image = image.astype(np.float32) / 255.
@@ -154,7 +154,10 @@ def kp_detection(db, k_ind, data_aug, debug):
                 br_heatmaps[b_ind, category, ybr, xbr] = 1
 
             tag_ind = tag_lens[b_ind]
-            tl_regrs[b_ind, tag_ind, :] = [fxtl - xtl, fytl - ytl]
+            try:
+                tl_regrs[b_ind, tag_ind, :] = [fxtl - xtl, fytl - ytl]
+            except Exception as e:
+                print(e, image_file)
             br_regrs[b_ind, tag_ind, :] = [fxbr - xbr, fybr - ybr]
             tl_tags[b_ind, tag_ind] = ytl * output_size[1] + xtl
             br_tags[b_ind, tag_ind] = ybr * output_size[1] + xbr
