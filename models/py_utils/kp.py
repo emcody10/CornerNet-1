@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F # FROM VGG
 
 from .utils import convolution, residual
 from .utils import make_layer, make_layer_revr
@@ -10,6 +11,66 @@ from .kp_utils import _sigmoid, _ae_loss, _regr_loss, _neg_loss
 from .kp_utils import make_tl_layer, make_br_layer, make_kp_layer
 from .kp_utils import make_pool_layer, make_unpool_layer
 from .kp_utils import make_merge_layer, make_inter_layer, make_cnv_layer
+
+##### VGG #####
+
+class VGG16(nn.Module):
+    def __init__(self, n_classes):
+        super(VGG16, self).__init__()
+        # conv layers: (in_channel size, out_channels size, kernel_size, stride, padding)
+        self.conv1_1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+        self.conv1_2 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+
+        self.conv2_1 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.conv2_2 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+
+        self.conv3_1 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+        self.conv3_2 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        self.conv3_3 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+
+        self.conv4_1 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
+        self.conv4_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv4_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+
+        self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+
+        # max pooling (kernel_size, stride)
+        self.pool = nn.MaxPool2d(2, 2)
+
+        # fully conected layers:
+        self.fc6 = nn.Linear(7*7*512, 4096)
+        self.fc7 = nn.Linear(4096, 4096)
+        self.fc8 = nn.Linear(4096, 1000)
+
+    def forward(self, x, training=True):
+        x = F.relu(self.conv1_1(x))
+        x = F.relu(self.conv1_2(x))
+        x = self.pool(x)
+        x = F.relu(self.conv2_1(x))
+        x = F.relu(self.conv2_2(x))
+        x = self.pool(x)
+        x = F.relu(self.conv3_1(x))
+        x = F.relu(self.conv3_2(x))
+        x = F.relu(self.conv3_3(x))
+        x = self.pool(x)
+        x = F.relu(self.conv4_1(x))
+        x = F.relu(self.conv4_2(x))
+        x = F.relu(self.conv4_3(x))
+        x = self.pool(x)
+        x = F.relu(self.conv5_1(x))
+        x = F.relu(self.conv5_2(x))
+        x = F.relu(self.conv5_3(x))
+        x = self.pool(x)
+        x = x.view(-1, 7 * 7 * 512)
+        x = F.relu(self.fc6(x))
+        x = F.dropout(x, 0.5, training=training)
+        x = F.relu(self.fc7(x))
+        x = F.dropout(x, 0.5, training=training)
+        x = self.fc8(x)
+        return x
+##############################
 
 class kp_module(nn.Module):
     def __init__(
@@ -94,18 +155,21 @@ class kp(nn.Module):
             residual(3, 128, 256, stride=2)
         ) if pre is None else pre
 
-        self.kps  = nn.ModuleList([
-            kp_module(
-                n, dims, modules, layer=kp_layer,
-                make_up_layer=make_up_layer,
-                make_low_layer=make_low_layer,
-                make_hg_layer=make_hg_layer,
-                make_hg_layer_revr=make_hg_layer_revr,
-                make_pool_layer=make_pool_layer,
-                make_unpool_layer=make_unpool_layer,
-                make_merge_layer=make_merge_layer
-            ) for _ in range(nstack)
-        ])
+        # self.kps  = nn.ModuleList([
+        #     kp_module(
+        #         n, dims, modules, layer=kp_layer,
+        #         make_up_layer=make_up_layer,
+        #         make_low_layer=make_low_layer,
+        #         make_hg_layer=make_hg_layer,
+        #         make_hg_layer_revr=make_hg_layer_revr,
+        #         make_pool_layer=make_pool_layer,
+        #         make_unpool_layer=make_unpool_layer,
+        #         make_merge_layer=make_merge_layer
+        #     ) for _ in range(nstack)
+        # ])
+
+        self.kps = nn.ModuleList([VGG16(6) for _ in range(nstack)])
+
         self.cnvs = nn.ModuleList([
             make_cnv_layer(curr_dim, cnv_dim) for _ in range(nstack)
         ])
@@ -168,7 +232,8 @@ class kp(nn.Module):
         tl_inds = xs[1]
         br_inds = xs[2]
 
-        inter = self.pre(image)
+        #inter = self.pre(image) #VGG16 changes
+        inter = image
         outs  = []
 
         layers = zip(
@@ -211,7 +276,8 @@ class kp(nn.Module):
     def _test(self, *xs, **kwargs):
         image = xs[0]
 
-        inter = self.pre(image)
+        #inter = self.pre(image) #VGG16 changes
+        inter = image
         outs  = []
 
         layers = zip(

@@ -72,7 +72,7 @@ class model(kp):
         out_dim = 6
 
         super(model, self).__init__(
-            n, 2, dims, modules, out_dim,
+            n, 1, dims, modules, out_dim, #nstack changed from 2 to 1 for VGG
             make_tl_layer=make_tl_layer,
             make_br_layer=make_br_layer,
             make_pool_layer=make_pool_layer,
