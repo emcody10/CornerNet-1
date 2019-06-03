@@ -34,13 +34,16 @@ class VGG16(nn.Module):
 
         self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
         self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
-        self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1) # changed 512 to 256 for cornernet hook up
+        self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1) # change 512 to 256 if not changing dims in CornerNet.py
 
         # max pooling (kernel_size, stride)
         self.pool = nn.MaxPool2d(2, 2)
 
+        # deconv, added for CornerNet hookup which expects images to be 128x128
+        self.deconv1_1 = nn.ConvTranspose2d(512, 512, kernel_size=3, stride=4, padding=0, output_padding=1)
+
         # fully conected layers:
-        # self.fc6 = nn.Linear(7*7*512, 4096)
+        # self.fc6 = nn.Linear(15*15*512, 4096) # 7 to 15
         # self.fc7 = nn.Linear(4096, 4096)
         # self.fc8 = nn.Linear(4096, 1000)
 
@@ -62,13 +65,16 @@ class VGG16(nn.Module):
         x = F.relu(self.conv5_1(x))
         x = F.relu(self.conv5_2(x))
         x = F.relu(self.conv5_3(x))
-        x = self.pool(x)
-        # x = x.view(-1, 7 * 7 * 512)
+        #x = self.pool(x)
+        # x = x.view(-1, 15 * 15 * 512) # 7 to 15
         # x = F.relu(self.fc6(x))
         # x = F.dropout(x, 0.5, training=training)
         # x = F.relu(self.fc7(x))
         # x = F.dropout(x, 0.5, training=training)
         # x = self.fc8(x)
+
+        x = F.relu(self.deconv1_1(x))
+
         return x
 ##############################
 
