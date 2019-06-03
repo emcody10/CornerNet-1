@@ -67,7 +67,7 @@ def make_hg_layer(kernel, dim0, dim1, mod, layer=convolution, **kwargs):
 class model(kp):
     def __init__(self, db):
         n       = 5
-        dims    = [256, 256, 384, 384, 384, 512]
+        dims    = [512, 256, 384, 384, 384, 512] # changed first entry from 256 to 512 for VGG16
         modules = [2, 2, 2, 2, 2, 4]
         out_dim = 6
 

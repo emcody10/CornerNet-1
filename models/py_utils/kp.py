@@ -34,15 +34,15 @@ class VGG16(nn.Module):
 
         self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
         self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
-        self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1) # changed 512 to 256 for cornernet hook up
 
         # max pooling (kernel_size, stride)
         self.pool = nn.MaxPool2d(2, 2)
 
         # fully conected layers:
-        self.fc6 = nn.Linear(7*7*512, 4096)
-        self.fc7 = nn.Linear(4096, 4096)
-        self.fc8 = nn.Linear(4096, 1000)
+        # self.fc6 = nn.Linear(7*7*512, 4096)
+        # self.fc7 = nn.Linear(4096, 4096)
+        # self.fc8 = nn.Linear(4096, 1000)
 
     def forward(self, x, training=True):
         x = F.relu(self.conv1_1(x))
@@ -63,12 +63,12 @@ class VGG16(nn.Module):
         x = F.relu(self.conv5_2(x))
         x = F.relu(self.conv5_3(x))
         x = self.pool(x)
-        x = x.view(-1, 7 * 7 * 512)
-        x = F.relu(self.fc6(x))
-        x = F.dropout(x, 0.5, training=training)
-        x = F.relu(self.fc7(x))
-        x = F.dropout(x, 0.5, training=training)
-        x = self.fc8(x)
+        # x = x.view(-1, 7 * 7 * 512)
+        # x = F.relu(self.fc6(x))
+        # x = F.dropout(x, 0.5, training=training)
+        # x = F.relu(self.fc7(x))
+        # x = F.dropout(x, 0.5, training=training)
+        # x = self.fc8(x)
         return x
 ##############################
 
@@ -168,7 +168,7 @@ class kp(nn.Module):
         #     ) for _ in range(nstack)
         # ])
 
-        self.kps = nn.ModuleList([VGG16(6) for _ in range(nstack)])
+        self.kps = nn.ModuleList([VGG16(6) for _ in range(nstack)]) #5x512x15x15
 
         self.cnvs = nn.ModuleList([
             make_cnv_layer(curr_dim, cnv_dim) for _ in range(nstack)
